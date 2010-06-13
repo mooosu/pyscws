@@ -181,5 +181,3 @@ PyMODINIT_FUNC initscws(void)
     PyModule_AddIntConstant(m, "RES_WORDPOS", 0);
     PyModule_AddIntConstant(m, "RES_ATTRPOS", 1);
 }
-
-
