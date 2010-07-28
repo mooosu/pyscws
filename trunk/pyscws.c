@@ -1,5 +1,5 @@
-#include <Python.h>
 #include "scws.h"
+#include <Python.h>
 #include "structmember.h"
 
 
@@ -46,10 +46,39 @@ static PyObject* participle(Scws* self, PyObject* args){
             PyList_SetItem(aword, 0, word_text);
             PyList_SetItem(aword, 1, word_attr);
             PyList_Append(result, aword);
+            Py_DECREF(aword);
             cur = cur->next;
         }
         scws_free_result(res);
-     }
+    }
+    return result;
+}
+
+static PyObject* get_top_words(Scws* self, PyObject* args){
+    char *text;
+    int limit;
+    if(!PyArg_ParseTuple(args, "si", &text, &limit)){
+        return NULL;
+    }
+    PyObject* result = PyList_New(0);
+    scws_send_text(self->scws, text, strlen(text));
+    scws_top_t res, cur;
+    cur = res = scws_get_tops(self->scws, limit, "n");
+    while (cur != NULL){
+        PyObject* aword = PyList_New(4);
+        PyObject* word = PyString_FromString(cur->word);
+        PyObject* word_attr = PyString_FromString(cur->attr);
+        PyObject* weight = PyFloat_FromDouble(cur->weight);
+        PyObject* times = PyInt_FromLong(cur->times);
+        PyList_SetItem(aword, 0, word);
+        PyList_SetItem(aword, 1, times);
+        PyList_SetItem(aword, 2, weight);
+        PyList_SetItem(aword, 3, word_attr);
+        PyList_Append(result, aword);
+        Py_DECREF(aword);
+        cur = cur->next;
+    }
+    scws_free_tops(res);
     return result;
 }
 
@@ -108,6 +137,7 @@ static PyMethodDef Scws_methods[] = {
     {"set_rules", (PyCFunction)set_rules, METH_VARARGS, "set rules"},
     {"set_ignore", (PyCFunction)set_ignore, METH_VARARGS, "set ignore"},
     {"participle", (PyCFunction)participle, METH_VARARGS, "participle text"},
+    {"get_top_words", (PyCFunction)get_top_words, METH_VARARGS, "get top words"},
     {NULL}
 };
 
