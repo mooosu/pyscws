@@ -1,6 +1,7 @@
 #include "scws.h"
 #include <Python.h>
 #include "structmember.h"
+#include "stdio.h"
 
 
 typedef struct {
@@ -56,14 +57,20 @@ static PyObject* participle(Scws* self, PyObject* args){
 
 static PyObject* get_top_words(Scws* self, PyObject* args){
     char *text;
+    char *attr = NULL;
     int limit;
-    if(!PyArg_ParseTuple(args, "si", &text, &limit)){
+    if(!PyArg_ParseTuple(args, "si|s", &text, &limit, &attr)){
         return NULL;
     }
     PyObject* result = PyList_New(0);
     scws_send_text(self->scws, text, strlen(text));
     scws_top_t res, cur;
-    cur = res = scws_get_tops(self->scws, limit, "n");
+    if(attr){
+        cur = res = scws_get_tops(self->scws, limit, attr);
+    }
+    else{
+        cur = res = scws_get_tops(self->scws, limit, NULL);
+    }
     while (cur != NULL){
         PyObject* aword = PyList_New(4);
         PyObject* word = PyString_FromString(cur->word);
