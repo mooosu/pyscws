@@ -98,8 +98,31 @@ static PyObject* set_charset(Scws* self, PyObject* args){
     Py_RETURN_TRUE;
 }
 
-static PyObject* set_ignore(Scws* self){
-    scws_set_ignore(self->scws, 1);
+static PyObject* set_ignore(Scws* self, PyObject* args){
+    int mode = 0;
+    if(!PyArg_ParseTuple(args, "|i", &mode)){
+        return 0;
+    }
+    if(mode){
+        scws_set_ignore(self->scws, 1);
+    }
+    else{
+        scws_set_ignore(self->scws, 0);
+    }
+    Py_RETURN_TRUE;
+}
+
+static PyObject* set_duality(Scws* self, PyObject* args){
+    int mode = 0;
+    if(!PyArg_ParseTuple(args, "|i", &mode)){
+        return 0;
+    }
+    if(mode){
+        scws_set_duality(self->scws, 1);
+    }
+    else{
+        scws_set_duality(self->scws, 0);
+    }
     Py_RETURN_TRUE;
 }
 
@@ -201,6 +224,7 @@ static PyMethodDef Scws_methods[] = {
     {"add_dict", (PyCFunction)add_dict, METH_VARARGS, "add dictionary"},
     {"set_rules", (PyCFunction)set_rules, METH_VARARGS, "set rules"},
     {"set_ignore", (PyCFunction)set_ignore, METH_VARARGS, "set ignore"},
+    {"set_duality", (PyCFunction)set_duality, METH_VARARGS, "set duality"},
     {"set_multi", (PyCFunction)set_multi, METH_VARARGS, "set multi"},
     {"participle", (PyCFunction)participle, METH_VARARGS, "participle text"},
     {"get_top_words", (PyCFunction)get_top_words, METH_VARARGS, "get top words"},
