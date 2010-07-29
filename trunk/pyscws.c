@@ -95,14 +95,22 @@ static PyObject* set_charset(Scws* self, PyObject* args){
         return 0;
     }
     scws_set_charset(self->scws, charset);
-    return Py_BuildValue("i", 1);
+    Py_RETURN_TRUE;
 }
 
 static PyObject* set_ignore(Scws* self){
     scws_set_ignore(self->scws, 1);
-    return Py_BuildValue("i", 1);
+    Py_RETURN_TRUE;
 }
 
+static PyObject* set_multi(Scws* self, PyObject* args){
+    int mode;
+    if(!PyArg_ParseTuple(args, "i", &mode)){
+        return 0;
+    }
+    scws_set_multi(self->scws, mode);
+    Py_RETURN_TRUE;
+}
 
 static PyObject* set_dict(Scws* self, PyObject* args){
     char* path;
@@ -113,7 +121,7 @@ static PyObject* set_dict(Scws* self, PyObject* args){
     if(scws_set_dict(self->scws, path, mode) == -1){
         return 0;
     }
-    return Py_BuildValue("i", 1);
+    Py_RETURN_TRUE;
 }
 
 static PyObject* add_dict(Scws* self, PyObject* args){
@@ -125,7 +133,7 @@ static PyObject* add_dict(Scws* self, PyObject* args){
     if(scws_add_dict(self->scws, path, mode) == -1){
         return 0;
     }
-    return Py_BuildValue("i", 1);
+    Py_RETURN_TRUE;
 }
 
 static PyObject* set_rules(Scws* self, PyObject* args){
@@ -134,7 +142,57 @@ static PyObject* set_rules(Scws* self, PyObject* args){
         return 0;
     }
     scws_set_rule(self->scws, fpath);
-    return Py_BuildValue("i", 1);
+    Py_RETURN_TRUE;
+}
+
+static PyObject* has_word(Scws* self, PyObject* args){
+    char *text;
+    char *attr = NULL;
+    if(!PyArg_ParseTuple(args, "s|s", &text, &attr)){
+        return NULL;
+    }
+    scws_send_text(self->scws, text, strlen(text));
+    int result;
+    if(attr){
+        result = scws_has_word(self->scws, attr);
+    }
+    else{
+        result = scws_has_word(self->scws, NULL);
+    }
+    Py_RETURN_TRUE;
+}
+
+static PyObject* get_words(Scws* self, PyObject* args){
+    char *text;
+    char *attr = NULL;
+    if(!PyArg_ParseTuple(args, "s|s", &text, &attr)){
+        return NULL;
+    }
+    scws_send_text(self->scws, text, strlen(text));
+    scws_top_t res, cur;
+    if(attr){
+        cur = res = scws_get_words(self->scws, attr);
+    }
+    else{
+        cur = res = scws_get_words(self->scws, NULL);
+    }
+    PyObject* result = PyList_New(0);
+    while (cur != NULL){
+        PyObject* aword = PyList_New(4);
+        PyObject* word = PyString_FromString(cur->word);
+        PyObject* word_attr = PyString_FromString(cur->attr);
+        PyObject* weight = PyFloat_FromDouble(cur->weight);
+        PyObject* times = PyInt_FromLong(cur->times);
+        PyList_SetItem(aword, 0, word);
+        PyList_SetItem(aword, 1, times);
+        PyList_SetItem(aword, 2, weight);
+        PyList_SetItem(aword, 3, word_attr);
+        PyList_Append(result, aword);
+        Py_DECREF(aword);
+        cur = cur->next;
+    }
+    scws_free_tops(res);
+    return result;
 }
 
 static PyMethodDef Scws_methods[] = {
@@ -143,8 +201,11 @@ static PyMethodDef Scws_methods[] = {
     {"add_dict", (PyCFunction)add_dict, METH_VARARGS, "add dictionary"},
     {"set_rules", (PyCFunction)set_rules, METH_VARARGS, "set rules"},
     {"set_ignore", (PyCFunction)set_ignore, METH_VARARGS, "set ignore"},
+    {"set_multi", (PyCFunction)set_multi, METH_VARARGS, "set multi"},
     {"participle", (PyCFunction)participle, METH_VARARGS, "participle text"},
     {"get_top_words", (PyCFunction)get_top_words, METH_VARARGS, "get top words"},
+    {"has_word", (PyCFunction)has_word, METH_VARARGS, "check certain attr of words in text"},
+    {"get_words", (PyCFunction)get_words, METH_VARARGS, "get certain attr of words in text"},
     {NULL}
 };
 
@@ -195,7 +256,12 @@ static PyTypeObject ScwsType = {
 #define PyMODINIT_FUNC void
 #endif
 
+static PyObject* core_version(){
+    return Py_BuildValue("s", SCWS_VERSION);
+}
+
 static PyMethodDef module_methods[] = {
+    {"core_version", (PyCFunction)core_version, METH_NOARGS, "get the core version"},
     {NULL}
 };
 
@@ -217,4 +283,9 @@ PyMODINIT_FUNC initscws(void)
 
     PyModule_AddIntConstant(m, "RES_WORDPOS", 0);
     PyModule_AddIntConstant(m, "RES_ATTRPOS", 1);
+
+    PyModule_AddIntConstant(m, "MULTI_SHORT", SCWS_MULTI_SHORT);
+    PyModule_AddIntConstant(m, "MULTI_DUALITY", SCWS_MULTI_DUALITY);
+    PyModule_AddIntConstant(m, "MULTI_ZMAIN", SCWS_MULTI_ZMAIN);
+    PyModule_AddIntConstant(m, "MULTI_ZALL", SCWS_MULTI_ZALL);
 }
