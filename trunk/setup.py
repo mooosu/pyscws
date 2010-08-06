@@ -14,6 +14,13 @@ scws_module = Extension(name='scws',
         extra_compile_args=[])
 
 
-setup (name = 'scws', version = '1.0', ext_modules = [scws_module])
+setup (
+    name = 'scws',
+    version = '0.0.1',
+    url = 'http://code.google.com/p/pyscws/',
+    description = 'a python package for scws',
+    author_email = 'beijixuexiong@gmail.com, ysj.ray@gmail.com, liangjianglou@126.com',
+    ext_modules = [scws_module]
+)
 
 

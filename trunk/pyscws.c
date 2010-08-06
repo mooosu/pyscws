@@ -182,7 +182,12 @@ static PyObject* has_word(Scws* self, PyObject* args){
     else{
         result = scws_has_word(self->scws, NULL);
     }
-    Py_RETURN_TRUE;
+    if(result){
+        Py_RETURN_TRUE;
+    }
+    else{
+        Py_RETURN_FALSE;
+    }
 }
 
 static PyObject* get_words(Scws* self, PyObject* args){
