@@ -1,0 +1,1 @@
+SCWS is abbr of "Simple Chinese Words Segment“, the project's homepage is http://www.hightman.cn/index.php?scws , and this project is a python package for scws.
